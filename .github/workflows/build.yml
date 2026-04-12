@@ -22,25 +22,22 @@ jobs:
       run: |
         brew install ldid xz
     
-    - name: Download iOS SDK
-      run: |
-        export THEOS=$HOME/theos
-        $THEOS/bin/update-theos
-    
     - name: Build ffz Tweak (arm64)
       run: |
         export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
         make clean
-        make package ARCHS=arm64 SDKVERSION=16.5
+        make package ARCHS=arm64 SDKVERSION=
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: ffz-dylib
         path: |
           .theos/obj/arm64/ffz.dylib
           packages/
+        retention-days: 30
     
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
