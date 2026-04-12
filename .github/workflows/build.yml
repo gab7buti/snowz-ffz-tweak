@@ -16,8 +16,7 @@ jobs:
     
     - name: Install Theos
       run: |
-        git clone --depth 1 https://github.com/theos/theos.git ~/theos
-        echo "THEOS=~/theos" >> $GITHUB_ENV
+        git clone --depth 1 https://github.com/theos/theos.git $HOME/theos
     
     - name: Install Theos Dependencies
       run: |
@@ -25,11 +24,12 @@ jobs:
     
     - name: Download iOS SDK
       run: |
-        cd ~/theos
-        ./bin/update-theos
+        export THEOS=$HOME/theos
+        $THEOS/bin/update-theos
     
     - name: Build ffz Tweak (arm64)
       run: |
+        export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
         make clean
         make package ARCHS=arm64 SDKVERSION=16.5
