@@ -1,0 +1,65 @@
+name: Build ffz Tweak
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Theos
+      run: |
+        git clone --depth 1 https://github.com/theos/theos.git ~/theos
+        echo "THEOS=~/theos" >> $GITHUB_ENV
+    
+    - name: Install Theos Dependencies
+      run: |
+        brew install ldid xz
+    
+    - name: Download iOS SDK
+      run: |
+        cd ~/theos
+        ./bin/update-theos
+    
+    - name: Build ffz Tweak (arm64)
+      run: |
+        cd $GITHUB_WORKSPACE
+        make clean
+        make package ARCHS=arm64 SDKVERSION=16.5
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ffz-dylib
+        path: |
+          .theos/obj/arm64/ffz.dylib
+          packages/
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: .theos/obj/arm64/ffz.dylib
+        asset_name: ffz.dylib
+        asset_content_type: application/octet-stream
